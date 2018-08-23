@@ -6,6 +6,6 @@ func GetUsername() string {
 	return "your_username"
 }
 
-func getPassword() string {
+func GetPassword() string {
 	return "your_password"
 }

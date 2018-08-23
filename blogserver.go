@@ -84,12 +84,12 @@ func loginHandle(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    if (Name != "your_username") {
+    if (Name != config.GetUsername()) {
         wirteResponse(w, "false")
         return
     }
 
-    UserPasswdMd5Bytes:= md5.Sum([]byte("your_password"))
+    UserPasswdMd5Bytes:= md5.Sum([]byte(config.GetPassword()))
 
     // fmt.Println("2", PasswdMd5Str, fmt.Sprintf("%x", UserPasswdMd5Bytes))
 
@@ -456,8 +456,6 @@ func dbConn() (db *sql.DB, err error) {
 }
 
 func main() {
-    fmt.Println(config.GetUsername())
-
     http.HandleFunc("/uploadFile", uploadFileHandle) // 上传
     http.HandleFunc("/", indexHandle)
     http.HandleFunc("/login", loginHandle)
