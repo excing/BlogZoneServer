@@ -11,6 +11,7 @@ import (
     "crypto/md5"
     "database/sql"
     "encoding/json"
+    "./config"
 )
 
 import _ "github.com/go-sql-driver/mysql"
@@ -120,73 +121,7 @@ func onlineHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func indexHandle(w http.ResponseWriter, r *http.Request) {
-    pageHandle(w, r, 10, 0) 
-}
-
-func editHandle(w http.ResponseWriter, r *http.Request) {
-    decoder := json.NewDecoder(r.Body)
-    var blog Blog
-    err := decoder.Decode(&blog)
-
-    if err != nil {
-        fmt.Println(err)
-        errorHandle(err, w)
-        return
-    } 
-
-    if blog.Token != CurrentToken {
-        fmt.Println("未登录")
-        wirteResponse(w, "false")
-        return
-    }
-
-    id := blog.Id
-
-    sqlStr := ""
-
-    if len(id) == 0 {
-        id = uuid.Must(uuid.NewV4()).String()
-    }
-
-    sqlStr = "INSERT INTO s_blog(blog_title, blog_content, blog_content_type, blog_channel, blog_edit_time, sql_update_time, blog_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
-
-    title := blog.Title
-    content := blog.Content
-    contentType := blog.ContentType
-    channel := blog.Channel
-    editTime := blog.EditTime
-    updateTime := time.Now().UnixNano() / int64(time.Millisecond)
-
-    var editTimeInt int64
-
-    if editTime == 0 {
-        editTimeInt = updateTime
-    } else {
-        editTimeInt = editTime
-    }
-
-    db, err := dbConn()
-
-    if err != nil {
-        fmt.Println(err)
-        errorHandle(err, w)
-        return
-    } 
-
-    result, err := db.Exec(sqlStr, title, content, contentType, channel, editTimeInt, updateTime, id)
-
-    defer db.Close()
-
-    if err != nil {
-        fmt.Println(err)
-        errorHandle(err, w)
-        return
-    } 
-
-    fmt.Println(result)
-
-    // w.Write([]byte(id))
-    wirteResponse(w, id)
+    pageHandle(w, r, 5, 0) 
 }
 
 func listHandle(w http.ResponseWriter, r *http.Request, pageIndex string) {
@@ -198,7 +133,7 @@ func listHandle(w http.ResponseWriter, r *http.Request, pageIndex string) {
 }
 
 func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
-    fmt.Println(r.URL.Path)
+    fmt.Println(r.URL.Path, limit, offset)
     r.ParseForm()
 
     ClientToken := r.PostFormValue("token")
@@ -289,6 +224,72 @@ func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
 
     // w.Write([]byte("ok"))
     wirteResponse(w, string(blogListJson))
+}
+
+func editHandle(w http.ResponseWriter, r *http.Request) {
+    decoder := json.NewDecoder(r.Body)
+    var blog Blog
+    err := decoder.Decode(&blog)
+
+    if err != nil {
+        fmt.Println(err)
+        errorHandle(err, w)
+        return
+    } 
+
+    if blog.Token != CurrentToken {
+        fmt.Println("未登录")
+        wirteResponse(w, "false")
+        return
+    }
+
+    id := blog.Id
+
+    sqlStr := ""
+
+    if len(id) == 0 {
+        id = uuid.Must(uuid.NewV4()).String()
+    }
+
+    sqlStr = "INSERT INTO s_blog(blog_title, blog_content, blog_content_type, blog_channel, blog_edit_time, sql_update_time, blog_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+
+    title := blog.Title
+    content := blog.Content
+    contentType := blog.ContentType
+    channel := blog.Channel
+    editTime := blog.EditTime
+    updateTime := time.Now().UnixNano() / int64(time.Millisecond)
+
+    var editTimeInt int64
+
+    if editTime == 0 {
+        editTimeInt = updateTime
+    } else {
+        editTimeInt = editTime
+    }
+
+    db, err := dbConn()
+
+    if err != nil {
+        fmt.Println(err)
+        errorHandle(err, w)
+        return
+    } 
+
+    result, err := db.Exec(sqlStr, title, content, contentType, channel, editTimeInt, updateTime, id)
+
+    defer db.Close()
+
+    if err != nil {
+        fmt.Println(err)
+        errorHandle(err, w)
+        return
+    } 
+
+    fmt.Println(result)
+
+    // w.Write([]byte(id))
+    wirteResponse(w, id)
 }
 
 func viewHandle(w http.ResponseWriter, r *http.Request, blogId string) {
@@ -455,6 +456,8 @@ func dbConn() (db *sql.DB, err error) {
 }
 
 func main() {
+    fmt.Println(config.GetUsername())
+
     http.HandleFunc("/uploadFile", uploadFileHandle) // 上传
     http.HandleFunc("/", indexHandle)
     http.HandleFunc("/login", loginHandle)
