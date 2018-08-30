@@ -28,7 +28,7 @@ type Blog struct {
 	ContentType string `json:"contentType,omitempty"`
 	Channel     string `json:"channel,omitempty"`
 	EditTime    int64  `json:"editTime,omitempty"`
-	UpdateTime  int64  `json:"updateTime,omitempty"`
+	CreateTime  int64  `json:"createTime,omitempty"`
 	Token       string `json:"token,omitempty"`
 	Mode        int64  `json:"mode,omitempty"`
 }
@@ -113,6 +113,22 @@ func loginHandle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func logoutHandle(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	ClientToken := r.PostFormValue("token")
+
+	if "" != ClientToken && ClientToken == CurrentToken {
+		NewToken := uuid.Must(uuid.NewV4()).String()
+
+		CurrentToken = NewToken
+
+		wirteResponse(w, "true")
+	} else {
+		wirteResponse(w, "false")
+	}
+}
+
 func onlineHandle(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
@@ -143,9 +159,7 @@ func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
 
 	ClientToken := r.PostFormValue("token")
 
-	if "" == ClientToken || ClientToken != CurrentToken {
-		fmt.Println("该用户未登录")
-	}
+	isLogin := !("" == ClientToken || ClientToken != CurrentToken)
 
 	var blogSlice BlogSlice
 	blogSlice.PageCount = 0
@@ -158,7 +172,15 @@ func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
 		return
 	}
 
-	sqlStr := "SELECT t1.blog_id, t1.blog_title, blog_edit_time  FROM s_blog t1 join (SELECT blog_id, max(id) as id from s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id ORDER BY t1.sql_update_time DESC LIMIT ? OFFSET ?;"
+	var sqlStr string
+
+	if isLogin {
+		fmt.Println("该用户已登录")
+		sqlStr = "SELECT t1.blog_id, t1.blog_title, blog_edit_time FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_title <> '' ORDER BY t1.sql_update_time DESC LIMIT ? OFFSET ?"
+	} else {
+		fmt.Println("该用户未登录")
+		sqlStr = "SELECT t1.blog_id, t1.blog_title, blog_edit_time FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_id NOT IN (SELECT res_id AS id FROM s_mode WHERE res_mode IN (1, 3)) AND t1.blog_title <> '' ORDER BY t1.sql_update_time DESC LIMIT ? OFFSET ?"
+	}
 
 	result, err := db.Query(sqlStr, limit, offset)
 
@@ -180,9 +202,9 @@ func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
 			return
 		}
 
-		if len(title) <= 0 {
-			continue
-		}
+		// if len(title) <= 0 {
+		// 	continue
+		// }
 
 		var blog Blog
 		blog.Id = id
@@ -194,7 +216,11 @@ func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
 		fmt.Println(id, title)
 	}
 
-	sqlStr = "SELECT count(t1.blog_id) FROM s_blog t1 join (SELECT blog_id, max(id) as id from s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id ORDER BY t1.sql_update_time DESC;"
+	if isLogin {
+		sqlStr = "SELECT count(t1.blog_id) FROM s_blog t1 join (SELECT blog_id, max(id) as id from s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_title <> '' ORDER BY t1.sql_update_time DESC"
+	} else {
+		sqlStr = "SELECT count(t1.blog_id) FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_id NOT IN (SELECT res_id AS id FROM s_mode WHERE res_mode IN (1, 3)) AND t1.blog_title <> ''"
+	}
 
 	result, err = db.Query(sqlStr)
 
@@ -444,9 +470,9 @@ func viewHandle(w http.ResponseWriter, r *http.Request, blogId string) {
 		return
 	}
 
-	sqlStr = "SELECT a.blog_title, a.blog_content, a.blog_content_type, a.blog_channel, a.blog_edit_time as mode FROM s_blog a WHERE a.blog_id=? ORDER BY a.sql_update_time DESC LIMIT 1;"
+	sqlStr = "SELECT a.blog_title, a.blog_content, a.blog_content_type, a.blog_channel, a.blog_edit_time, (SELECT sql_update_time FROM s_blog a WHERE a.blog_id=? ORDER BY a.sql_update_time LIMIT 1) AS blog_create_time FROM s_blog a WHERE a.blog_id=? ORDER BY a.sql_update_time DESC LIMIT 1;"
 
-	result, err = db.Query(sqlStr, blogId)
+	result, err = db.Query(sqlStr, blogId, blogId)
 	if err != nil {
 		fmt.Println(err)
 		errorHandle(err, w)
@@ -457,8 +483,8 @@ func viewHandle(w http.ResponseWriter, r *http.Request, blogId string) {
 
 	for result.Next() {
 		var title, content, content_type, channel string
-		var edit_time int64
-		err = result.Scan(&title, &content, &content_type, &channel, &edit_time)
+		var edit_time, create_time int64
+		err = result.Scan(&title, &content, &content_type, &channel, &edit_time, &create_time)
 		if err != nil {
 			fmt.Println(err)
 			errorHandle(err, w)
@@ -471,6 +497,7 @@ func viewHandle(w http.ResponseWriter, r *http.Request, blogId string) {
 		blog.ContentType = content_type
 		blog.Channel = channel
 		blog.EditTime = edit_time
+		blog.CreateTime = create_time
 
 		fmt.Println(title, content, content_type)
 	}
@@ -687,6 +714,7 @@ func main() {
 	http.HandleFunc("/uploadFile", uploadFileHandle) // 上传
 	http.HandleFunc("/", indexHandle)
 	http.HandleFunc("/login", loginHandle)
+	http.HandleFunc("/logout", logoutHandle)
 	http.HandleFunc("/online", onlineHandle)
 	http.HandleFunc("/edit", editHandle)
 	http.HandleFunc("/list/", makeHandler(listHandle))
