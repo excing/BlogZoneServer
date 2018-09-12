@@ -179,7 +179,7 @@ func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
 		sqlStr = "SELECT t1.blog_id, t1.blog_title, blog_edit_time FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_title <> '' ORDER BY t1.sql_update_time DESC LIMIT ? OFFSET ?"
 	} else {
 		fmt.Println("该用户未登录")
-		sqlStr = "SELECT t1.blog_id, t1.blog_title, blog_edit_time FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_id NOT IN (SELECT res_id AS id FROM s_mode WHERE res_mode IN (1, 3)) AND t1.blog_title <> '' ORDER BY t1.sql_update_time DESC LIMIT ? OFFSET ?"
+		sqlStr = "SELECT t1.blog_id, t1.blog_title, blog_edit_time FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_id NOT IN (SELECT res_id AS id FROM s_mode WHERE res_mode IN (1, 3, 4)) AND t1.blog_title <> '' ORDER BY t1.sql_update_time DESC LIMIT ? OFFSET ?"
 	}
 
 	result, err := db.Query(sqlStr, limit, offset)
@@ -219,7 +219,7 @@ func pageHandle(w http.ResponseWriter, r *http.Request, limit int, offset int) {
 	if isLogin {
 		sqlStr = "SELECT count(t1.blog_id) FROM s_blog t1 join (SELECT blog_id, max(id) as id from s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_title <> '' ORDER BY t1.sql_update_time DESC"
 	} else {
-		sqlStr = "SELECT count(t1.blog_id) FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_id NOT IN (SELECT res_id AS id FROM s_mode WHERE res_mode IN (1, 3)) AND t1.blog_title <> ''"
+		sqlStr = "SELECT count(t1.blog_id) FROM s_blog t1 JOIN (SELECT blog_id, MAX(id) AS id FROM s_blog GROUP BY blog_id ) t2 ON t1.id = t2.id WHERE t1.blog_id NOT IN (SELECT res_id AS id FROM s_mode WHERE res_mode IN (1, 3, 4)) AND t1.blog_title <> ''"
 	}
 
 	result, err = db.Query(sqlStr)
@@ -355,7 +355,7 @@ func editHandle(w http.ResponseWriter, r *http.Request) {
 
 		var ResPwd string
 
-		if 2 == mode {
+		if 2 == mode || 4 == mode {
 			ResPwd = genResPwd()
 		}
 
@@ -444,7 +444,7 @@ func viewHandle(w http.ResponseWriter, r *http.Request, blogId string) {
 	var isVisit bool
 
 	if !isLogin {
-		if 2 == blog.Mode {
+		if 2 == blog.Mode || 4 == blog.Mode {
 			pwdMd5Str := r.PostFormValue("pwd")
 			blogPwdMd5Bytes := md5.Sum([]byte(pwd.String))
 
