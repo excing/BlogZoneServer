@@ -637,7 +637,7 @@ func updateBlogPwdHandle(w http.ResponseWriter, r *http.Request, BlogId string) 
 
 	ResPwd := r.PostFormValue("pwd")
 
-	sqlStr := "update s_mode set res_mode=2, res_pwd=? where res_id=?"
+	sqlStr := "update s_mode set res_pwd=? where res_id=?"
 
 	db, err := dbConn()
 
