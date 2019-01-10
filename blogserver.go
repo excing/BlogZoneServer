@@ -703,10 +703,10 @@ func wirteResponse(w http.ResponseWriter, body string) {
 }
 
 func dbConn() (db *sql.DB, err error) {
-	dbDriver := "mysql"
-	dbUser := "root"
-	dbPass := "123456"
-	dbName := "myblog"
+	dbDriver := config.GetDBDriver()
+	dbUser := config.GetDBUser()
+	dbPass := config.GetDBPassword()
+	dbName := config.GetDBName()
 	return sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
 }
 
