@@ -5,10 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -36,36 +34,6 @@ type Blog struct {
 type BlogSlice struct {
 	PageCount int    `json:"pageCount"`
 	BlogList  []Blog `json:"list,omitempty"`
-}
-
-// 上传图像接口
-func uploadFileHandle(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("method:", r.Method) //获取请求的方法
-
-	os.Mkdir("uploaded", os.ModePerm)
-
-	file, handler, err := r.FormFile("imageA")
-	if err != nil {
-		fmt.Println(err)
-		errorHandle(err, w)
-		return
-	}
-
-	defer file.Close()
-	fmt.Println(handler.Header)
-	f1, err := os.OpenFile("./uploaded/"+strconv.FormatInt(time.Now().Unix(), 10)+"_"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		fmt.Println(err)
-		errorHandle(err, w)
-		return
-	}
-	defer f1.Close()
-	io.Copy(f1, file)
-
-	filename1 := f1.Name()
-
-	// w.Write([]byte(filename1))
-	wirteResponse(w, filename1)
 }
 
 var CurrentToken string
@@ -711,7 +679,6 @@ func dbConn() (db *sql.DB, err error) {
 }
 
 func main() {
-	http.HandleFunc("/uploadFile", uploadFileHandle) // 上传
 	http.HandleFunc("/", indexHandle)
 	http.HandleFunc("/login", loginHandle)
 	http.HandleFunc("/logout", logoutHandle)

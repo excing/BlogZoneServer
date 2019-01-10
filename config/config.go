@@ -10,18 +10,18 @@ func GetPassword() string {
 	return "your_password"
 }
 
-func GetDBDriver() {
+func GetDBDriver() string {
 	return "mysql"
 }
 
-func GetDBUser() {
+func GetDBUser() string {
 	return "db_username"
 }
 
-func GetDBPassword() {
+func GetDBPassword() string {
 	return "db_password"
 }
 
-func GetDBName() {
+func GetDBName() string {
 	return "db_name"
 }
