@@ -378,6 +378,8 @@ func deleteHandle(w http.ResponseWriter, r *http.Request, blogId string) {
 		return
 	}
 
+	defer db.Close()
+
 	sqlStr := "DELETE FROM s_blog WHERE blog_id=?"
 
 	_, err = db.Query(sqlStr, blogId)
@@ -386,8 +388,6 @@ func deleteHandle(w http.ResponseWriter, r *http.Request, blogId string) {
 		errorHandle(err, w)
 		return
 	}
-
-	defer db.Close()
 
 	wirteResponse(w, "ok")
 }
