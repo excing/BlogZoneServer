@@ -722,7 +722,7 @@ func main() {
 	http.HandleFunc("/edit", editHandle)
 	http.HandleFunc("/list/", makeHandler(listHandle))
 	http.HandleFunc("/view/", makeHandler(viewHandle))
-	http.HandleFunc("/delete/", makeHandler(deleteHandle))
+	http.HandleFunc("/del/", makeHandler(deleteHandle))
 	http.HandleFunc("/history/", makeHandler(historyHandle))
 	http.HandleFunc("/getBlogPwd/", makeHandler(getBlogPwdHandle))
 	http.HandleFunc("/updateBlogPwd/", makeHandler(updateBlogPwdHandle))
