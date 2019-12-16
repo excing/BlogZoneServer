@@ -356,6 +356,42 @@ func editHandle(w http.ResponseWriter, r *http.Request) {
 	wirteResponse(w, id)
 }
 
+func deleteHandle(w http.ResponseWriter, r *http.Request, blogId string) {
+	fmt.Println(r.URL.Path)
+	r.ParseForm()
+
+	ClientToken := r.PostFormValue("token")
+
+	isLogin := "" != ClientToken && ClientToken == CurrentToken
+
+	if !isLogin {
+		fmt.Println("未登录")
+		wirteResponse(w, "false")
+		return
+	}
+
+	db, err := dbConn()
+
+	if err != nil {
+		fmt.Println(err)
+		errorHandle(err, w)
+		return
+	}
+
+	sqlStr := "DELETE FROM s_blog WHERE blog_id=?"
+
+	_, err = db.Query(sqlStr, blogId)
+	if err != nil {
+		fmt.Println(err)
+		errorHandle(err, w)
+		return
+	}
+
+	defer db.Close()
+
+	wirteResponse(w, "ok")
+}
+
 func viewHandle(w http.ResponseWriter, r *http.Request, blogId string) {
 	fmt.Println(r.URL.Path)
 	r.ParseForm()
@@ -686,6 +722,7 @@ func main() {
 	http.HandleFunc("/edit", editHandle)
 	http.HandleFunc("/list/", makeHandler(listHandle))
 	http.HandleFunc("/view/", makeHandler(viewHandle))
+	http.HandleFunc("/delete", makeHandler(deleteHandle))
 	http.HandleFunc("/history/", makeHandler(historyHandle))
 	http.HandleFunc("/getBlogPwd/", makeHandler(getBlogPwdHandle))
 	http.HandleFunc("/updateBlogPwd/", makeHandler(updateBlogPwdHandle))
