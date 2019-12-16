@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"./config"
-)
 
-import _ "github.com/go-sql-driver/mysql"
-import "github.com/gobuffalo/uuid"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/gobuffalo/uuid"
+)
 
 const PWD_WORDS = "0123456789abcdefghijklmnopqrstuvwxyz"
 
@@ -722,7 +722,7 @@ func main() {
 	http.HandleFunc("/edit", editHandle)
 	http.HandleFunc("/list/", makeHandler(listHandle))
 	http.HandleFunc("/view/", makeHandler(viewHandle))
-	http.HandleFunc("/delete", makeHandler(deleteHandle))
+	http.HandleFunc("/delete/", makeHandler(deleteHandle))
 	http.HandleFunc("/history/", makeHandler(historyHandle))
 	http.HandleFunc("/getBlogPwd/", makeHandler(getBlogPwdHandle))
 	http.HandleFunc("/updateBlogPwd/", makeHandler(updateBlogPwdHandle))
