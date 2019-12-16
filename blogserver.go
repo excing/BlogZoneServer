@@ -686,7 +686,7 @@ func errorHandle(err error, w http.ResponseWriter) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(view|history|list|getBlogPwd|updateBlogPwd)/([a-zA-Z0-9-]+)$")
+var validPath = regexp.MustCompile("^/(view|del|history|list|getBlogPwd|updateBlogPwd)/([a-zA-Z0-9-]+)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -720,12 +720,12 @@ func main() {
 	http.HandleFunc("/logout", logoutHandle)
 	http.HandleFunc("/online", onlineHandle)
 	http.HandleFunc("/edit", editHandle)
-	http.HandleFunc("/list/", makeHandler(listHandle))
-	http.HandleFunc("/view/", makeHandler(viewHandle))
-	http.HandleFunc("/del/", makeHandler(deleteHandle))
-	http.HandleFunc("/history/", makeHandler(historyHandle))
-	http.HandleFunc("/getBlogPwd/", makeHandler(getBlogPwdHandle))
-	http.HandleFunc("/updateBlogPwd/", makeHandler(updateBlogPwdHandle))
+	http.HandleFunc("/list/", makeHandler(listHandle))                   // 添加 list 到 validPath
+	http.HandleFunc("/view/", makeHandler(viewHandle))                   // 添加 view 到 validPath
+	http.HandleFunc("/del/", makeHandler(deleteHandle))                  // 添加 del 到 validPath
+	http.HandleFunc("/history/", makeHandler(historyHandle))             // 添加 history 到 validPath
+	http.HandleFunc("/getBlogPwd/", makeHandler(getBlogPwdHandle))       // 添加 getBlogPwd 到 validPath
+	http.HandleFunc("/updateBlogPwd/", makeHandler(updateBlogPwdHandle)) // 添加 updateBlogPwd 到 validPath
 	err := http.ListenAndServe(":8080", nil)
 	fmt.Println(err)
 }
